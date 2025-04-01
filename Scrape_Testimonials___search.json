@@ -1,0 +1,173 @@
+{
+  "name": "Scrape Testimonials - search",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        440,
+        0
+      ],
+      "id": "bd54e60d-f34d-47d3-9615-f82eb18fe637",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        340,
+        200
+      ],
+      "id": "14d93ccb-99df-4a46-9cdd-e9390168a068",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "XCUBGX6P1HfvHNR9",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        500,
+        220
+      ],
+      "id": "6d13d921-9f4f-4e34-b93c-47d4ebd2ad31",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "name": "TestimonialScraprTestr",
+        "description": "Call this tool to get any customer list",
+        "workflowId": {
+          "__rl": true,
+          "value": "O81JR2iqa9qTtpPd",
+          "mode": "list",
+          "cachedResultName": "Site customer base scraper v0.2 - Google search"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Customer scraper",
+              "displayName": "Customer scraper",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "Followers",
+              "displayName": "Followers",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.1,
+      "position": [
+        700,
+        220
+      ],
+      "id": "8c7276e5-4913-4aa7-bfa1-3050b356e224",
+      "name": "Call n8n Workflow Tool"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "d0657f8a-72c0-406e-b3cc-ca73ffe9aa87",
+      "name": "When chat message received",
+      "webhookId": "fa73eef6-9fc7-4b82-a7d5-1adce8caba3a"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call n8n Workflow Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ec962caa-092c-4e4e-b3b4-5b8bd1569823",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8091befa65d167b97efc56d4c04d7376222a36c4db35c5ec024d3da3dd9034cc"
+  },
+  "id": "ZEskMcyxeV1oBv8z",
+  "tags": []
+}
