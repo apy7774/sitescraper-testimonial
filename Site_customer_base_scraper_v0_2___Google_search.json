@@ -1,0 +1,436 @@
+{
+  "name": "Site customer base scraper v0.2 - Google search",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "Customer scraper"
+            },
+            {
+              "name": "Followers"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "0899fef2-6fc2-44c2-9aa3-fbc8b796cdfc",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "Parse the JSON 'query' and output the following parameters separately:\n\nSearched company\nTestimonial Company\nClient contact / Rep name",
+              "role": "system"
+            },
+            {
+              "content": "=\n{{ JSON.stringify($json.nodes[0].name) }}\n{{ JSON.stringify($json.nodes[1].name) }}"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        220,
+        0
+      ],
+      "id": "da4b5ac4-616d-44d3-831b-4eaeee3e7575",
+      "name": "OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "XCUBGX6P1HfvHNR9",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function parse($input) {\n    // Extract HTML from nested JSON structure\n    let html = null;\n\n    try {\n        // Handle nested input structure\n        if ($input && $input.item && $input.item.json && $input.item.json.html_debug) {\n            // Parse the JSON-encoded HTML\n            const parsedHtml = JSON.parse($input.item.json.html_debug);\n            html = parsedHtml.data;\n        }\n        // Fallback parsing attempts\n        else if (typeof $input === 'string') {\n            html = $input;\n        }\n        else if ($input && $input.html_debug) {\n            html = $input.html_debug;\n        }\n    } catch (error) {\n        return [{\n            json: {\n                error: \"Failed to parse HTML content\",\n                errorDetails: error.message\n            }\n        }];\n    }\n\n    // Validate HTML content\n    if (!html || typeof html !== 'string') {\n        return [{\n            json: {\n                error: \"Unable to extract HTML content\",\n                inputType: typeof $input,\n                inputDetails: JSON.stringify($input).substring(0, 500)\n            }\n        }];\n    }\n\n    // Parsing function for case studies\n    const caseStudies = [];\n    const caseStudyRegex = /<li[^>]*class=\"flex flex-col[^>]*>(.*?)<\\/li>/gs;\n    const matches = [...html.matchAll(caseStudyRegex)];\n\n    matches.forEach(match => {\n        const block = match[1];\n        \n        // Extraction helper function\n        const extractText = (regex) => {\n            const result = block.match(regex);\n            return result ? result[1].trim().replace(/<[^>]*>/g, '') : null;\n        };\n\n        const companyName = extractText(/<h3[^>]*>(.*?)<\\/h3>/);\n        const description = extractText(/<p[^>]+text-base[^>]*>(.*?)<\\/p>/);\n        const logoUrl = block.match(/src=\"([^\"]+)\"/)?.[1];\n        const testimonial = extractText(/<p[^>]+mb-11[^>]*>(.*?)<\\/p>/);\n        const caseStudyUrl = block.match(/<a[^>]+href=\"([^\"]+)\">Read the case/)?.[1];\n\n        if (companyName && caseStudyUrl) {\n            caseStudies.push({\n                company: companyName,\n                description: description,\n                logo: logoUrl,\n                testimonial: testimonial,\n                caseStudyUrl: `${caseStudyUrl}`\n            });\n        }\n    });\n\n    // Return results or error if no case studies found\n    if (caseStudies.length === 0) {\n        return [{\n            json: {\n                error: \"No case studies found\",\n                inputPreview: html.substring(0, 500)\n            }\n        }];\n    }\n\n    // Return results directly as an array of items\n    return caseStudies.map(study => ({\n        json: study\n    }));\n}\n\n// Execute the parse function\nreturn parse($input);"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        0
+      ],
+      "id": "d8d6e663-f4e2-4d6b-a529-e254032d8ae8",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "documentId": {
+          "__rl": true,
+          "value": "1G0YK_KBy0e1D3Rx5ZQvolws_Qy-7RM8DW3MpsaENPWI",
+          "mode": "list",
+          "cachedResultName": "1-RevenueCat client list",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1G0YK_KBy0e1D3Rx5ZQvolws_Qy-7RM8DW3MpsaENPWI/edit?usp=drivesdk"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1940,
+        0
+      ],
+      "id": "1b9a1922-1d39-4c43-8a01-3a6d1c83c9d4",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "BBm0mOG7ntj1CRHP",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "52e1a11d-7a8d-4d7f-b331-6f755d6f0913",
+              "name": "response",
+              "value": "Done",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2180,
+        0
+      ],
+      "id": "5ceb8167-a4aa-42c4-aeda-75b93968895e",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "url": "https://www.google.com/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "jsonparse",
+              "value": "=\n"
+            },
+            {
+              "name": "site"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "UserAgent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 3
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        0
+      ],
+      "id": "33868349-bbbc-4743-b11c-644025d5fa15",
+      "name": "HTTP-int"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d3f785ab-999c-4177-9103-d91344b26bfe",
+              "name": "body",
+              "value": "={{$json}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1020,
+        0
+      ],
+      "id": "059955d8-1cc6-4e24-aba1-8283aaeb2b12",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "30d733a1-0361-421e-b82a-c3f090f85f19",
+              "name": "html_debug",
+              "value": "={{$json[\"body\"]}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1240,
+        0
+      ],
+      "id": "89639f97-977b-4561-9ae3-b8711240ccfb",
+      "name": "Edit Fields2"
+    }
+  ],
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "json": {
+          "parameters": {
+            "values": {
+              "string": [
+                {
+                  "name": "searchQuery",
+                  "value": "site:example.com \"our customers\" OR \"case studies\" OR \"testimonials\""
+                }
+              ]
+            },
+            "options": {
+              "batching": {
+                "batch": {
+                  "mode": "iterations",
+                  "amount": 1
+                },
+                "batchSize": 1,
+                "delay": {
+                  "unit": "seconds",
+                  "amount": "={{Math.floor(Math.random() * 45) + 60}}"
+                }
+              }
+            }
+          },
+          "name": "Prepare Search Queries",
+          "type": "n8n-nodes-base.set",
+          "typeVersion": 1,
+          "position": [
+            100,
+            300
+          ]
+        }
+      },
+      {
+        "json": {
+          "parameters": {
+            "query": "={{$json.searchQuery}}",
+            "resultType": "links",
+            "maxResults": 3,
+            "options": {
+              "delay": {
+                "unit": "seconds",
+                "amount": "={{Math.floor(Math.random() * 45) + 60}}"
+              }
+            }
+          },
+          "name": "Google Search for Customer Pages",
+          "type": "n8n-nodes-base.googleSearch",
+          "typeVersion": 1,
+          "position": [
+            300,
+            300
+          ]
+        }
+      },
+      {
+        "json": {
+          "parameters": {
+            "mode": "first",
+            "options": {
+              "filter": "={{$json.items.filter(item => !item.isAd)}}"
+            }
+          },
+          "name": "Select First Organic Result Link",
+          "type": "n8n-nodes-base.itemLists",
+          "typeVersion": 1.1,
+          "position": [
+            500,
+            300
+          ]
+        }
+      },
+      {
+        "json": {
+          "parameters": {
+            "url": "={{$('Select First Organic Result Link').first().json.link}}",
+            "method": "GET",
+            "headerParameters": {
+              "parameters": [
+                {
+                  "name": "User-Agent",
+                  "value": "={{['Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36'][Math.floor(Math.random() * 2)]}}}"
+                }
+              ]
+            },
+            "options": {
+              "batching": {
+                "batch": {
+                  "mode": "iterations",
+                  "amount": 1
+                },
+                "batchSize": 1,
+                "delay": {
+                  "unit": "seconds",
+                  "amount": "={{Math.floor(Math.random() * 45) + 90}}"
+                }
+              },
+              "timeout": 60000,
+              "proxy": {},
+              "retryConfig": {
+                "maxAttempts": 5,
+                "baseDelay": "={{Math.pow(2, $execution.retryCount) * 2000}}",
+                "statusCodes": [
+                  429,
+                  500,
+                  502,
+                  503,
+                  504
+                ]
+              }
+            }
+          },
+          "name": "HTTP Request to Customer Page",
+          "type": "n8n-nodes-base.httpRequest",
+          "typeVersion": 4.1,
+          "position": [
+            700,
+            300
+          ]
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "HTTP-int",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP-int": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d7714d4d-e6da-442b-af17-9835ef440520",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8091befa65d167b97efc56d4c04d7376222a36c4db35c5ec024d3da3dd9034cc"
+  },
+  "id": "O81JR2iqa9qTtpPd",
+  "tags": []
+}
